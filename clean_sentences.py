@@ -1,9 +1,11 @@
 from pathlib import Path
 import re
+import pandas as pd
 
 def clean_sentences_for_tts():
     file_path = Path("/home/gera/Downloads/russian_sentences.txt")
-    output_path = Path("/home/gera/Downloads/russian_sentences_cleaned.txt")
+    output_txt_path = Path("/home/gera/Downloads/russian_sentences_cleaned.txt")
+    output_csv_path = Path("/home/gera/Downloads/russian_sentences_dataset.csv")
 
     if not file_path.exists():
         print(f"File not found: {file_path}")
@@ -66,20 +68,29 @@ def clean_sentences_for_tts():
         cleaned.append(sent)
         removed_stats['kept'] += 1
 
-    with open(output_path, 'w', encoding='utf-8') as f:
+    with open(output_txt_path, 'w', encoding='utf-8') as f:
         for sent in cleaned:
-            f.write(sent + '')
+            f.write(sent + '\n')
+
+    df = pd.DataFrame({
+        'sentence_id': range(1, len(cleaned) + 1),
+        'text': cleaned,
+        'text_length': [len(s) for s in cleaned],
+        'word_count': [len(s.split()) for s in cleaned]
+    })
+    df.to_csv(output_csv_path, index=False, encoding='utf-8-sig')
 
     print("Cleaning Results:")
     print(f"   Original: {len(sentences)}")
     print(f"   Kept: {removed_stats['kept']}")
     print(f"   Removed: {len(sentences) - removed_stats['kept']}")
-    print(f"Removal Breakdown:")
+    print(f"\nRemoval Breakdown:")
     for reason, count in sorted(removed_stats.items(), key=lambda x: x[1], reverse=True):
         if reason != 'kept':
             print(f"   {reason}: {count}")
 
-    print(f"Saved to: {output_path}")
+    print(f"\nSaved TXT to: {output_txt_path}")
+    print(f"Saved CSV to: {output_csv_path}")
     print(f"Unique preserved: {len(set(cleaned))}")
 
 if __name__ == "__main__":
